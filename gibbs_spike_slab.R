@@ -42,6 +42,13 @@ gibbs_spike_slab <- function(n,
   }
   
   if (is.na(prior_params)){
+    # The default prior choices are:
+    # γ_j ~ Ber(1/(p_w + p_x - 2))
+    # σ^2 ~ IG(3,6)
+    # ρ | σ^2 ~ N(0,0.5σ^2)
+    # α_j | γ_j ~ γ_j * N(0,τ_1) + (1 - γ_j)* N(0, τ_2)
+    # β_j | (γ_j, σ^2) ~ γ_j * N(0,τ_1 * σ^2) + (1 - γ_j)* N(0, τ_2 * σ^2)
+    
     tau_0 = 0.001
     tau_1 = 10
     gamma_prior_prob = 1/(p_w+p_x-2)
