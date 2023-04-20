@@ -1,3 +1,8 @@
+library(MASS)
+library(Rcpp)
+library(RcppArmadillo)
+library(truncnorm)
+
 gibbs_spike_slab <- function(n,
                              y,
                              x_samp,
@@ -43,7 +48,7 @@ gibbs_spike_slab <- function(n,
   
   if (is.na(prior_params)){
     # The default prior choices are:
-    # γ_j ~ Ber(1/(p_w + p_x - 2))
+    # γ_j ~ Ber(1/(p_w + p_x))
     # σ^2 ~ IG(3,6)
     # ρ | σ^2 ~ N(0,0.5σ^2)
     # α_j | γ_j ~ γ_j * N(0,τ_1) + (1 - γ_j)* N(0, τ_0)
@@ -136,22 +141,13 @@ gibbs_spike_slab <- function(n,
   return(out)
 }
 
-trunc_sample <- function(n,mean=0,sd=1,a=-Inf,b=Inf){
-  # Takes n samples from a truncated normal distribution with range (a,b)
-  u = runif(n)
-  alpha = (a-mean)/sd
-  beta = (b-mean)/sd
-  eps = qnorm((pnorm(beta) - pnorm(alpha))*u + pnorm(alpha))
-  return(eps*sd + mean)
-}
-
 s_sample <- function(y_obs,x_obs,w_0,w_1,beta,alpha,var,p) {
   # Simulates the selection variable (to use in Gibbs sampling)
   temp_var = var / (var + p**2)
   temp_mean_1 = w_0%*%alpha
   temp_mean_2 = w_1%*%alpha + (y_obs - x_obs%*%beta)*p/(var + p**2)
-  s_0 = trunc_sample(nrow(w_0),temp_mean_1,1,-Inf,0)
-  s_1 = trunc_sample(nrow(w_1),temp_mean_2,sqrt(temp_var),0,Inf)
+  s_0 = rtruncnorm(nrow(w_0),a=-Inf,b=0,mean=temp_mean_1,sd=1)
+  s_1 = rtruncnorm(nrow(w_1),a=0,b=Inf,mean=temp_mean_2,sd=sqrt(temp_var))
   s_sim = list(s_0, s_1)
   return(s_sim)
 }
