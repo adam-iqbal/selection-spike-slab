@@ -4,9 +4,6 @@ library(RcppArmadillo)
 
 source("gibbs_spike_slab.R")
 
-####################################
-# Normal simulations -----
-
 normal_sim <- function(n){
   var_matrix = matrix(c(1,0.5,0.5,1),ncol=2,nrow=2)
   w1 = rnorm(n,mean=0,sd=sqrt(3))
@@ -29,22 +26,43 @@ normal_sim <- function(n){
   return(out)
 }
 
+# Alternative function with decreasing coefficients, for testing selection vs threshold (and by changing correlation between predictors)
+normal_sim_2 <- function(n){
+  var_matrix = matrix(c(1,0.5,0.5,1),ncol=2,nrow=2)
+  corr_matrix = matrix(rep(0,196),ncol=14)+diag(rep(3,14))
+  corr_vars = mvrnorm(n,mu=c(rep(0,14)),Sigma=corr_matrix)
+  w = corr_vars[,1:7]
+  # x = cbind(corr_vars[,1],corr_vars[,8],corr_vars[,3],corr_vars[,9],corr_vars[,5:6],corr_vars[,10])
+  x = corr_vars[,8:14]
+  errs = mvrnorm(n,mu=c(0,0),Sigma=var_matrix)
+  u1 = errs[,1]
+  u2 = errs[,2]
+  alpha = c(2,1,0.5,0.2,0.1,0.05,0.01,0)
+  beta = c(2,1,0.5,0.2,0.1,0.05,0.01,0)
+  s = cbind(1,w)%*%alpha + u1
+  y = ifelse(s>0,cbind(1,x)%*%beta,NA) + u2
+  out = list(y,x,w)
+  names(out) = c("y","x","w")
+  return(out)
+}
+
 ######################################
-# Testing stuff ----
-set.seed(1)
-test_samp = normal_sim(1000)
+
+coeff_prior="laplace"
+threshold=0.05
 
 # Variable selection case
-test_gibbs = gibbs_spike_slab(20000,test_samp$y,test_samp$x,test_samp$w,burn_in=2500)
-colnames(test_gibbs$params) <- c('a0','a1','a2','a3','a4','a5','a6','b0','b1','b2','b3','b4','b5','b6','p','var')
+set.seed(1)
+test_samp = normal_sim_2(1000)
+test_gibbs = gibbs_spike_slab(20000,test_samp$y,test_samp$x,test_samp$w,burn_in=2500,coeff_prior=coeff_prior, threshold=threshold)
 rownames(test_gibbs$params) = c()
-colnames(test_gibbs$variables) <- c('a0','a1','a2','a3','a4','a5','a6','b0','b1','b2','b3','b4','b5','b6')
 rownames(test_gibbs$variables) = c()
 apply(test_gibbs$params,2,quantile,probs=c(0.05,0.5,0.95))
 apply(test_gibbs$variables,2,mean)
 
-# Case without variable selection for comparison
-test_gibbs2 = gibbs_spike_slab(20000,test_samp$y,test_samp$x,test_samp$w,model_select=FALSE,burn_in=2500)
-colnames(test_gibbs2$params) <- c('a0','a1','a2','a3','a4','a5','a6','b0','b1','b2','b3','b4','b5','b6','p','var')
+
+# Non-selection case for comparison
+set.seed(1)
+test_gibbs2 = gibbs_spike_slab(20000,test_samp$y,test_samp$x,test_samp$w,model_select=FALSE,burn_in=2500,coeff_prior="normal")
 rownames(test_gibbs2$params) = c()
 apply(test_gibbs2$params,2,quantile,probs=c(0.05,0.5,0.95))
