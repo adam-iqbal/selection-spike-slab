@@ -104,7 +104,7 @@ gibbs_spike_slab <- function(n,
   # Sampling initial normal mixture variances for Laplace priors - does nothing if prior is normal
   # We sample v_j ~ Exp(1/2) in the first iteration
   # Then β_j | v_j, γ_j ~ γ_j * N(0,τ_1**2 * v_j) + (1 - γ_j)* N(0, τ_0**2 * v_j)
-  # The posterior v_j | β_j, γ_j follows an Inverse Gaussian distribution, so in subsequent iterations we sample v_j from an Inverse Gaussian
+  # The posterior (1/v_j) | β_j, γ_j follows an Inverse Gaussian distribution, so in subsequent iterations we sample 1/v_j from an Inverse Gaussian
   alpha_exp = rexp(p_w,rate=1/2)
   beta_exp = rexp(p_w,rate=1/2)
   alpha_mix = ifelse(rep(coeff_prior=="laplace",p_w),alpha_exp*alpha_var**2,alpha_var)
