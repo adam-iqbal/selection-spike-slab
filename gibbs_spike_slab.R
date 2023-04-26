@@ -188,8 +188,6 @@ s_sample <- function(y_obs,x_obs,w_0,w_1,beta,alpha,var,p) {
   temp_var = var / (var + p**2)
   temp_mean_1 = w_0%*%alpha
   temp_mean_2 = w_1%*%alpha + (y_obs - x_obs%*%beta)*p/(var + p**2)
-  #s_0 = trunc_sample(nrow(w_0),temp_mean_1,1,-Inf,0)
-  #s_1 = trunc_sample(nrow(w_1),temp_mean_2,sqrt(temp_var),0,Inf)
   s_0 = rtruncnorm(nrow(w_0),a=-Inf,b=0,mean=temp_mean_1,sd=1)
   s_1 = rtruncnorm(nrow(w_1),a=0,b=Inf,mean=temp_mean_2,sd=sqrt(temp_var))
   s_sim = list(s_0, s_1)
