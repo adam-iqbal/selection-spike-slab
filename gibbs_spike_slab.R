@@ -40,7 +40,7 @@ gibbs_spike_slab <- function(n,
   p_w = ncol(w)
   p_x = ncol(x)
   param_list = matrix(NA,ncol=(p_w+p_x+2),nrow=(n-burn_in)) # Pre-defining these speeds up the code a lot
-  gamma_list = matrix(NA,ncol=(p_w+p_x+1),nrow=(n-burn_in)) 
+  gamma_list = matrix(NA,ncol=(p_w+p_x-1),nrow=(n-burn_in)) 
   
   # Initial parameter values
   alpha = init_alpha
@@ -63,7 +63,7 @@ gibbs_spike_slab <- function(n,
     # No variable selection still returns gamma, but only the fixed gamma used for the entire sampling, as opposed
     # to every gamma sampled. This allows for Gibbs sampling to be applied to a fixed sub-model, if gamma is
     # specified in the initial parameters and model_select is False
-    gamma_list = c(gamma,NA)
+    gamma_list = c(gamma[2:p_w],gamma[(p_w+2):(p_w+p_x)],NA)
   }
   
   # The default prior choices are:
@@ -149,6 +149,8 @@ gibbs_spike_slab <- function(n,
       }
       
       gamma = ifelse(gamma_post_prob>u, 1, 0)
+      gamma[1] = 1  # intercept is always included
+      gamma[(p_w+1)] = 1
       alpha_var = ifelse(gamma[1:p_w]==1,tau_1,tau_0)
       beta_var = ifelse(gamma[(p_w+1):(p_w+p_x)]==1,tau_1,tau_0)
       
@@ -164,7 +166,8 @@ gibbs_spike_slab <- function(n,
       all_params = c(alpha, beta, p, var)
       param_list[i-burn_in,] = all_params
       if(model_select==TRUE){
-        gamma_list[i-burn_in,] = c(gamma,r)
+        gamma_report = c(gamma[2:p_w],gamma[(p_w+2):(p_w+p_x)],r)
+        gamma_list[i-burn_in,] = gamma_report
       }
     }
     
@@ -175,7 +178,7 @@ gibbs_spike_slab <- function(n,
 }
 
 trunc_sample <- function(n,mean=0,sd=1,a=-Inf,b=Inf){
-  # Takes n samples from a truncated normal distribution with range (a,b)
+  # Takes n samples from a truncated normal distribution with range (a,b). Only here for completion - s_sample uses rtruncnorm now
   u = runif(n)
   alpha = (a-mean)/sd
   beta = (b-mean)/sd
