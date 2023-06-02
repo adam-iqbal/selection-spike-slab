@@ -8,7 +8,7 @@ set.seed(1) # guarantee reproducibility
 
 dat <- MEPS2001
 dat <- dat[,-c(7,11)] # remove the actual expenditures 
-y_amb <- exp(dat[,7])
+y_amb <- dat[,7]
 dat <- as.matrix(dat)
 
 x_amb <- dat[,-c(7,9)]
