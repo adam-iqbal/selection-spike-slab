@@ -21,6 +21,8 @@ normal_sim <- function(n){
   beta = c(1,0.5,-0.5,-0.5,2,0,-0.15)
   s = cbind(1,w)%*%alpha + u1
   y = ifelse(s>0,cbind(1,x)%*%beta,NA) + u2
+  x = as.data.frame(x)
+  w = as.data.frame(w)
   out = list(y,x,w)
   names(out) = c("y","x","w")
   return(out)
@@ -41,6 +43,8 @@ normal_sim_2 <- function(n){
   beta = c(2,1,0.5,0.2,0.1,0.05,0.01,0)
   s = cbind(1,w)%*%alpha + u1
   y = ifelse(s>0,cbind(1,x)%*%beta,NA) + u2
+  x = as.data.frame(x)
+  w = as.data.frame(w)
   out = list(y,x,w)
   names(out) = c("y","x","w")
   return(out)
@@ -54,15 +58,18 @@ threshold=0.05
 # Variable selection case
 set.seed(1)
 test_samp = normal_sim_2(1000)
-test_gibbs = gibbs_spike_slab(20000,test_samp$y,test_samp$x,test_samp$w,burn_in=2500,coeff_prior=coeff_prior, threshold=threshold)
-rownames(test_gibbs$params) = c()
-rownames(test_gibbs$variables) = c()
+test_gibbs = gibbs_spike_slab(20000,test_samp$y,test_samp$x,test_samp$w,burn_in=2500,
+                              alpha_spike=alpha_spike,alpha_slab=alpha_slab,
+                              beta_spike=beta_spike,beta_slab=beta_slab,
+                              alpha_threshold=alpha_threshold,beta_threshold=beta_threshold)
 apply(test_gibbs$params,2,quantile,probs=c(0.05,0.5,0.95))
 apply(test_gibbs$variables,2,mean)
 
 
 # Non-selection case for comparison
 set.seed(1)
-test_gibbs2 = gibbs_spike_slab(20000,test_samp$y,test_samp$x,test_samp$w,model_select=FALSE,burn_in=2500,coeff_prior="normal")
-rownames(test_gibbs2$params) = c()
+test_gibbs2 = gibbs_spike_slab(20000,test_samp$y,test_samp$x,test_samp$w,model_select=FALSE,burn_in=2500,
+                              alpha_spike=alpha_spike,alpha_slab=alpha_slab,
+                              beta_spike=beta_spike,beta_slab=beta_slab,
+                              alpha_threshold=alpha_threshold,beta_threshold=beta_threshold)
 apply(test_gibbs2$params,2,quantile,probs=c(0.05,0.5,0.95))
