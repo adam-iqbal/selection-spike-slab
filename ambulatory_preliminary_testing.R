@@ -1,8 +1,12 @@
 library(ssmrob)
 data(MEPS2001)
 
-coeff_prior="laplace" # can also be normal distribution
-threshold=0.05 # vary this from 0.01 to 0.2
+alpha_spike="laplace"
+alpha_slab="laplace"
+beta_spike="laplace"
+beta_slab="laplace"
+alpha_threshold=0.1
+beta_threshold=0.1
 
 set.seed(1) # guarantee reproducibility
 
@@ -13,8 +17,14 @@ dat <- as.matrix(dat)
 
 x_amb <- dat[,-c(7,9)]
 w_amb <- dat[,-c(7,9)]
-#system.time(gibbs_spike_slab(20000,y_amb,x_amb,w_amb,burn_in=2500,coeff_prior=coeff_prior, threshold=threshold)) # uncomment if timing is required
-test_gibbs <- gibbs_spike_slab(20000,y_amb,x_amb,w_amb,burn_in=2500,coeff_prior=coeff_prior, threshold=threshold)
+#system.time(gibbs_spike_slab(20000,y_amb,x_amb,w_amb,burn_in=2500,
+#                              alpha_spike=alpha_spike,alpha_slab=alpha_slab,
+#                              beta_spike=beta_spike,beta_slab=beta_slab,
+#                              alpha_threshold=alpha_threshold,beta_threshold=beta_threshold) # uncomment if timing is required
+test_gibbs <- gibbs_spike_slab(20000,y_amb,x_amb,w_amb,burn_in=2500,
+                              alpha_spike=alpha_spike,alpha_slab=alpha_slab,
+                              beta_spike=beta_spike,beta_slab=beta_slab,
+                              alpha_threshold=alpha_threshold,beta_threshold=beta_threshold))
 colnames(test_gibbs$params) <- c("int_w","educ_w","age_w","income_w","female_w","totchr_w","age2_w","blhisp_w","ins_w",
                                  "int_x","educ_x","age_x","income_x","female_x","totchr_x","age2_x","blhisp_x","ins_x",
                                  "rho","sigma2")
