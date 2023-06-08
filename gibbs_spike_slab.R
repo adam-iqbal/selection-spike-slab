@@ -192,9 +192,7 @@ gibbs_spike_slab <- function(n,
   }
   
   if((length(colnames(w_samp))>0) & (length(colnames(x_samp))>0)){
-    print("test")
     colnames(param_list) = c("w_intercept",colnames(w_samp),"x_intercept",colnames(x_samp),"rho","sigma")
-    print("test2")
     colnames(gamma_list) = c(colnames(w_samp),colnames(x_samp),"r")
   }
   out = list(param_list, gamma_list)
