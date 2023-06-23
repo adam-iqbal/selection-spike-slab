@@ -1,4 +1,11 @@
 stepwise_ssel <- function(object,k=2,path="drop",S_vars=NULL,O_vars=NULL){
+  # Input types
+  # object : A fitted selection model using selection function.
+  # k : Parameter for AIC. k=2 gives the usual AIC, k=log(n) gives BIC.
+  # path : The type of selection. "drop" for backward selection, "add" for forward selection.
+  # S_vars : A vector of possible variables that can be used for the selection equation (e.g. column names from the data used to fit the model). Only needed when using forward selection.
+  # O_vars : A vector of possible variables that can be used for the outcome equation. Only needed when using forward selection.
+  
   steps <- nParam(object)
   current_object <- object
   
@@ -139,10 +146,8 @@ update_ssel <- function(object,formula,eqn,evaluate=FALSE){
   else call
 }
 start_check <- function(object){
-  # selection function uses two-step estimates as initial values for parameters, which breaks down if 
-  # the selection equation has only the intercept (which is the starting point for forwards selection)
-  # This function checks if the selection equation has only the intercept, and if so, manually sets initial values
-  # for the parameters, choosing 0 for all the coefficients, 1 for sigma and 0.5 for rho.
+  # selection function uses two-step estimates as initial values for parameters, which breaks down if the selection equation has only the intercept (which is the starting point for forwards selection).
+  # This function checks if the selection equation has only the intercept, and if so, manually sets initial values for the parameters, choosing 0 for all the coefficients, 1 for sigma and 0.5 for rho.
   p_s <- length(attr(terms.formula(eval(object$selection)),"term.labels"))
   p_o <- length(attr(terms.formula(eval(object$outcome)),"term.labels"))
   if(p_s > 0){
