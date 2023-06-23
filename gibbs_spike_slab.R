@@ -1,12 +1,3 @@
-library(MASS)
-library(Rcpp)
-library(RcppArmadillo)
-library(truncnorm)
-library(statmod)
-
-####################################
-# Spike slab code ----
-
 gibbs_spike_slab <- function(n,
                              y,
                              x_samp,
@@ -18,7 +9,8 @@ gibbs_spike_slab <- function(n,
                              init_beta=NA,
                              init_p = 0,
                              init_var = 1,
-                             init_gamma=NA,
+                             init_gamma_alpha=NA,
+                             init_gamma_beta=NA,
                              init_r = 0.5,
                              
                              alpha_var = NA,
@@ -48,23 +40,40 @@ gibbs_spike_slab <- function(n,
   w = cbind(1,as.matrix(w_samp))
   p_w = ncol(w)
   p_x = ncol(x)
-  param_list = matrix(NA,ncol=(p_w+p_x+2),nrow=(n-burn_in)) # Pre-defining these speeds up the code a lot
-  gamma_list = matrix(NA,ncol=(p_w+p_x-1),nrow=(n-burn_in)) 
+  alpha_param_list = matrix(NA,ncol=p_w,nrow=(n-burn_in))
+  beta_param_list = matrix(NA,ncol=p_x,nrow=(n-burn_in))
+  gamma_alpha_list = matrix(NA,ncol=p_w-1,nrow=(n-burn_in))
+  gamma_beta_list = matrix(NA,ncol=p_x-1,nrow=(n-burn_in))
+  other_params_list = matrix(NA,ncol=3,nrow=(n-burn_in))
   
+  if(length(colnames(w_samp))>0){
+    colnames(alpha_param_list) = c("Intercept",colnames(w_samp))
+    colnames(gamma_alpha_list) = colnames(w_samp)
+  }
+  if(length(colnames(x_samp))>0){
+    colnames(beta_param_list) = c("Intercept",colnames(x_samp))
+    colnames(gamma_beta_list) = colnames(x_samp)
+  }
+  colnames(other_params_list) = c("rho","sigma","r")
   # Initial parameter values
-  alpha = init_alpha
+  alpha = c(init_alpha)
   if(sum(is.na(init_alpha))>0){
     alpha = rep(0,p_w)
   }
-  beta = init_beta
+  beta = c(init_beta)
   if(sum(is.na(init_beta))>0){
     beta = rep(0,p_x)
   }
   p = init_p
   var = init_var
-  gamma = init_gamma
-  if(sum(is.na(init_gamma))>0){
-    gamma = rep(ifelse(model_select==TRUE,0,1),p_w+p_x)
+  
+  gamma_alpha = c(1,init_gamma_alpha)
+  gamma_beta = c(1,init_gamma_beta)
+  if(sum(is.na(init_gamma_alpha))>0){
+    gamma_alpha = c(1,rep(ifelse(model_select==TRUE,0,1),p_w-1))
+  }
+  if(sum(is.na(init_gamma_beta))>0){
+    gamma_beta = c(1,rep(ifelse(model_select==TRUE,0,1),p_x-1))
   }
   
   r = init_r
@@ -72,7 +81,9 @@ gibbs_spike_slab <- function(n,
     # No variable selection still returns gamma, but only the fixed gamma used for the entire sampling, as opposed
     # to every gamma sampled. This allows for Gibbs sampling to be applied to a fixed sub-model, if gamma is
     # specified in the initial parameters and model_select is False
-    gamma_list = c(gamma[2:p_w],gamma[(p_w+2):(p_w+p_x)],NA)
+    gamma_alpha_list = gamma_alpha[-1]
+    gamma_beta_list = gamma_beta[-1]
+    r = NA
   }
   
   # Prior parameter values
@@ -92,8 +103,8 @@ gibbs_spike_slab <- function(n,
   tau_1_beta = ifelse(is.na(tau_1_beta), thresholding(beta_threshold,dist=beta_slab,part="slab"), tau_1_beta)
   
   if(model_select==TRUE){
-    alpha_var = ifelse(gamma[1:ncol(w)]==1,tau_1_alpha,tau_0_alpha)
-    beta_var = ifelse(gamma[(ncol(w)+1):(ncol(w)+ncol(x))]==1,tau_1_alpha,tau_0_alpha)
+    alpha_var = ifelse(gamma_alpha==1,tau_1_alpha,tau_0_alpha)
+    beta_var = ifelse(gamma_beta==1,tau_1_alpha,tau_0_alpha)
   }
   else{
     if(sum(is.na(alpha_var))>0){
@@ -103,6 +114,7 @@ gibbs_spike_slab <- function(n,
       beta_var = rep(10,p_x)
     }
   }
+  
   # Below are computed as they do not depend on the parameters, and so only need to be computed once
   idx = 1 - is.na(y)
   
@@ -116,13 +128,8 @@ gibbs_spike_slab <- function(n,
   
   
   # Sampling initial normal mixture variances for Laplace priors - does nothing if prior is normal
-  v_alpha = rep(p_w,0)
-  v_beta = rexp(p_x,0)
-  
-  
-  gamma_alpha = gamma[1:p_w]
-  gamma_beta = gamma[(p_w+1):(p_w+p_x)]
-  
+  v_alpha = rep(0,p_w)
+  v_beta = rep(0,p_x)
   v_alpha[gamma_alpha==0] = alpha_spike_sampler(p_w - sum(gamma_alpha),param=0)
   v_alpha[gamma_alpha==1] = alpha_slab_sampler(sum(gamma_alpha),param=0)
   v_beta[gamma_beta==0] = beta_spike_sampler(p_x - sum(gamma_beta),param=0)
@@ -149,29 +156,28 @@ gibbs_spike_slab <- function(n,
     var = 1/rgamma(1,var_post_c,var_post_d) # As to simulate inverse gamma
     
     if(model_select==TRUE){
-      u = runif(p_w+p_x)
-      gamma_post_prob = rep(0,p_w+p_x)
+      u_w = runif(p_w)
+      u_x = runif(p_x)
       
-      gamma_post_prob[1:p_w] = bernoulli_prob(r,
+      gamma_alpha_post_prob = bernoulli_prob(r,
                                               dnorm(alpha,sd=tau_1_alpha*sqrt(v_alpha))*alpha_slab_pdf(v_alpha),
                                               dnorm(alpha,sd=tau_0_alpha*sqrt(v_alpha))*alpha_spike_pdf(v_alpha))
-      gamma_post_prob[(p_w+1):(p_w+p_x)] = bernoulli_prob(r,
+      gamma_beta_post_prob = bernoulli_prob(r,
                                               dnorm(beta,sd=tau_1_beta*sqrt(v_beta))*beta_slab_pdf(v_beta),
                                               dnorm(beta,sd=tau_0_beta*sqrt(v_beta))*beta_spike_pdf(v_beta))
       
-      gamma = ifelse(gamma_post_prob>u, 1, 0)
-      gamma[1] = 1 # intercept is included
-      gamma[(p_w+1)] = 1
+      gamma_alpha = ifelse(gamma_alpha_post_prob>u_w, 1, 0)
+      gamma_beta = ifelse(gamma_beta_post_prob>u_x, 1, 0)
+      gamma_alpha[1] = 1 # intercept is included
+      gamma_beta[1] = 1
       
-      r = rbeta(1, shape1=r_params[1]+sum(gamma) , shape2=r_params[2]+p_w+p_x-sum(gamma))
+      r = rbeta(1, shape1=r_params[1]+sum(gamma_alpha)+sum(gamma_beta),
+                shape2=r_params[2]+p_w+p_x-sum(gamma_alpha)-sum(gamma_beta))
     }
     
-    alpha_var = ifelse(gamma[1:p_w]==1,tau_1_alpha,tau_0_alpha)
-    beta_var = ifelse(gamma[(p_w+1):(p_w+p_x)]==1,tau_1_beta,tau_0_beta)
-    
-    gamma_alpha = gamma[1:p_w]
-    gamma_beta = gamma[(p_w+1):(p_w+p_x)]
-    
+    alpha_var = ifelse(gamma_alpha==1,tau_1_alpha,tau_0_alpha)
+    beta_var = ifelse(gamma_beta==1,tau_1_beta,tau_0_beta)
+
     v_alpha[gamma_alpha==0] = alpha_spike_sampler(p_w - sum(gamma_alpha),param=abs(alpha)/tau_0_alpha)
     v_alpha[gamma_alpha==1] = alpha_slab_sampler(sum(gamma_alpha),param=abs(alpha)/tau_1_alpha)
     v_beta[gamma_beta==0] = beta_spike_sampler(p_x - sum(gamma_beta),param=abs(beta)/tau_0_beta)
@@ -181,32 +187,20 @@ gibbs_spike_slab <- function(n,
     beta_mix = beta_var**2 * v_beta
     
     if(i > burn_in){
-      all_params = c(alpha, beta, p, var)
-      param_list[i-burn_in,] = all_params
+      alpha_param_list[i-burn_in,] = alpha
+      beta_param_list[i-burn_in,] = beta
+      other_params_list[i-burn_in,] = c(p, var, r)
       if(model_select==TRUE){
-        gamma_report = c(gamma[2:p_w],gamma[(p_w+2):(p_w+p_x)],r)
-        gamma_list[i-burn_in,] = gamma_report
+        
+        gamma_alpha_list[i-burn_in,] = gamma_alpha[-1]
+        gamma_beta_list[i-burn_in,] = gamma_beta[-1]
       }
     }
     
   }
-  
-  if((length(colnames(w_samp))>0) & (length(colnames(x_samp))>0)){
-    colnames(param_list) = c("w_intercept",colnames(w_samp),"x_intercept",colnames(x_samp),"rho","sigma")
-    colnames(gamma_list) = c(colnames(w_samp),colnames(x_samp),"r")
-  }
-  out = list(param_list, gamma_list)
-  names(out) = c("params", "variables")
+  out = list(alpha_param_list, beta_param_list, gamma_alpha_list, gamma_beta_list, other_params_list)
+  names(out) = c("alpha", "beta","alpha_indicators","beta_indicators","other_params")
   return(out)
-}
-
-trunc_sample <- function(n,mean=0,sd=1,a=-Inf,b=Inf){
-  # Takes n samples from a truncated normal distribution with range (a,b)
-  u = runif(n)
-  alpha = (a-mean)/sd
-  beta = (b-mean)/sd
-  eps = qnorm((pnorm(beta) - pnorm(alpha))*u + pnorm(alpha))
-  return(eps*sd + mean)
 }
 
 s_sample <- function(y_obs,x_obs,w_0,w_1,beta,alpha,var,p) {
@@ -280,7 +274,7 @@ const_sampler <- function(n,param=NULL){
 
 t_sampler <- function(n,param){
   if(param>0){
-    return( 1/rgamma(n,3/2,(param**2 + 2)/2) )
+    return( 1/rgamma(n,4/2,(param**2 + 3)/2) )
   }
   return(1/rgamma(1,1))
 }
@@ -296,7 +290,7 @@ const_pdf <- function(x){
 }
 
 t_pdf <- function(x){
-  prob = x**(-2) * exp(-1/x)
+  prob = x**(-5/2) * exp(-(3/2)/x)
   return(prob)
 }
 
@@ -312,7 +306,8 @@ thresholding <- function(t,dist="laplace",part="spike"){
     tau = ifelse(part=="spike",-t/log(0.05), -t/log(0.95))
   }
   else if(dist=="t"){
-    tau = ifelse(part=="spike",t/qt(0.975,2),t/qt(0.525,2))
+    tau = ifelse(part=="spike",t/qt(0.975,3),t/qt(0.525,3))
   }
   return(tau)
+}
 }
