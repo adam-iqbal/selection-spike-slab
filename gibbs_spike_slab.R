@@ -126,7 +126,6 @@ gibbs_spike_slab <- function(n,
   wtw_n0 = t(w_0) %*% w_0
   wtw_n1 = t(w_1) %*% w_1
   
-  
   # Sampling initial normal mixture variances for Laplace priors - does nothing if prior is normal
   v_alpha = rep(0,p_w)
   v_beta = rep(0,p_x)
@@ -159,12 +158,14 @@ gibbs_spike_slab <- function(n,
       u_w = runif(p_w)
       u_x = runif(p_x)
       
-      gamma_alpha_post_prob = bernoulli_prob(r,
-                                              dnorm(alpha,sd=tau_1_alpha*sqrt(v_alpha))*alpha_slab_pdf(v_alpha),
-                                              dnorm(alpha,sd=tau_0_alpha*sqrt(v_alpha))*alpha_spike_pdf(v_alpha))
-      gamma_beta_post_prob = bernoulli_prob(r,
-                                              dnorm(beta,sd=tau_1_beta*sqrt(v_beta))*beta_slab_pdf(v_beta),
-                                              dnorm(beta,sd=tau_0_beta*sqrt(v_beta))*beta_spike_pdf(v_beta))
+      alpha_slab_log_prob = dnorm(alpha,sd=tau_1_alpha*sqrt(v_alpha),log=TRUE) + log(alpha_slab_pdf(v_alpha))
+      alpha_spike_log_prob = dnorm(alpha,sd=tau_0_alpha*sqrt(v_alpha),log=TRUE) + log(alpha_spike_pdf(v_alpha))
+      beta_slab_log_prob = dnorm(beta,sd=tau_1_beta*sqrt(v_beta),log=TRUE) + log(beta_slab_pdf(v_beta))
+      beta_spike_log_prob = dnorm(beta,sd=tau_0_beta*sqrt(v_beta),log=TRUE) + log(beta_spike_pdf(v_beta))
+      
+      gamma_alpha_post_prob = bernoulli_log(r,alpha_slab_log_prob,alpha_spike_log_prob)
+      
+      gamma_beta_post_prob = bernoulli_log(r,beta_slab_log_prob,beta_spike_log_prob)
       
       gamma_alpha = ifelse(gamma_alpha_post_prob>u_w, 1, 0)
       gamma_beta = ifelse(gamma_beta_post_prob>u_x, 1, 0)
@@ -173,15 +174,16 @@ gibbs_spike_slab <- function(n,
       
       r = rbeta(1, shape1=r_params[1]+sum(gamma_alpha)+sum(gamma_beta),
                 shape2=r_params[2]+p_w+p_x-sum(gamma_alpha)-sum(gamma_beta))
+      
     }
     
     alpha_var = ifelse(gamma_alpha==1,tau_1_alpha,tau_0_alpha)
     beta_var = ifelse(gamma_beta==1,tau_1_beta,tau_0_beta)
-
-    v_alpha[gamma_alpha==0] = alpha_spike_sampler(p_w - sum(gamma_alpha),param=abs(alpha)/tau_0_alpha)
-    v_alpha[gamma_alpha==1] = alpha_slab_sampler(sum(gamma_alpha),param=abs(alpha)/tau_1_alpha)
-    v_beta[gamma_beta==0] = beta_spike_sampler(p_x - sum(gamma_beta),param=abs(beta)/tau_0_beta)
-    v_beta[gamma_beta==1] = beta_slab_sampler(sum(gamma_beta),param=abs(beta)/tau_1_beta)
+    
+    v_alpha[gamma_alpha==0] = alpha_spike_sampler(p_w - sum(gamma_alpha),param=abs(alpha[gamma_alpha==0])/tau_0_alpha)
+    v_alpha[gamma_alpha==1] = alpha_slab_sampler(sum(gamma_alpha),param=abs(alpha[gamma_alpha==1])/tau_1_alpha)
+    v_beta[gamma_beta==0] = beta_spike_sampler(p_x - sum(gamma_beta),param=abs(beta[gamma_beta==0])/tau_0_beta)
+    v_beta[gamma_beta==1] = beta_slab_sampler(sum(gamma_beta),param=abs(beta[gamma_beta==1])/tau_1_beta)
     
     alpha_mix = alpha_var**2 * v_alpha
     beta_mix = beta_var**2 * v_beta
@@ -240,8 +242,15 @@ beta_p_sample <- function(res,y_obs,x_obs,alpha,var,beta_prior_var,p_param) {
 }
 
 bernoulli_prob <- function(p,t1,t2){
-  # Used in computing gamma posterior, just to make it more readable
+  # Unused as log probability is now used
   return(p*t1/(p*t1 + (1-p)*t2))
+}
+
+bernoulli_log <- function(p,t1,t2){
+  # Used in computing gamma posterior probabilities - on log scale for numerical stability
+  exponent = log(1-p) - log(p) + t2 - t1
+  out = 1/(1+exp(exponent))
+  return(out)
 }
 
 h_sampler <- function(dist){
