@@ -282,14 +282,14 @@ const_sampler <- function(n,param=NULL){
 }
 
 t_sampler <- function(n,param){
-  if(param>0){
+  if(sum(param)>0){
     return( 1/rgamma(n,4/2,(param**2 + 3)/2) )
   }
   return(1/rgamma(1,1))
 }
 
 laplace_sampler <- function(n,param){
-  if(param>0){
+  if(sum(param)>0){
     return(1/rinvgauss(n,1/param,shape=1))
   }
   return(rexp(n,rate=1/2))
