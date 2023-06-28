@@ -6,8 +6,8 @@ normal_sim <- function(n,p=20,corr=0){
   errs = mvrnorm(n,mu=c(0,0),Sigma=var_matrix)
   u1 = errs[,1]
   u2 = errs[,2]
-  alpha = c(2,1,0.5,0.2,0.1,0.05,0.01,rep(0,p-6))
-  beta = c(2,1,0.5,0.2,0.1,0.05,0.01,rep(0,p-6))
+  alpha = c(2,2,1.5,1,0.5,0.3,rep(0,p-5))
+  beta = c(2,2,1.5,1,0.5,0.3,rep(0,p-5))
   s = cbind(1,w)%*%alpha + u1
   y = ifelse(s>0,cbind(1,x)%*%beta,NA) + u2
   colnames(x) = paste('x',1:p,sep="")
