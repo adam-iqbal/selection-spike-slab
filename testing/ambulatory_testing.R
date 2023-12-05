@@ -6,12 +6,6 @@ dat <- MEPS2001[,-c(6,7,11)]
 y <- dat[,6]
 w <- dat[,-c(6,8)]
 x <- dat[,-c(3,6,8)]
-# # noise <- covariate_sim(n,p=18)$w
-# w <- cbind(w,noise)
-# x <- cbind(x,noise)
-# w <- dat[,-c(3,6,8,9)]
-# x <- dat[,-c(1,3,6,8,9)]
-# deviations <- apply(w,2,sd)
 w <- scale(w)
 x <- scale(x)
 s <- dat[,8]
