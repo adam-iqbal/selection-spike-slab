@@ -15,9 +15,7 @@ gibbs_spike_slab <- function(n,
                              init_gamma_beta=NA,
                              init_r = 0.5,
                              
-                             alpha_sd = NA,
-                             beta_sd = NA,
-                             rho_param = 0.5,
+                             rho_param = 5,
                              var_params = c(1,1),
                              r_params = c(1,1),
                              
@@ -32,9 +30,44 @@ gibbs_spike_slab <- function(n,
                              tau_1_beta = NA,
                              
                              var_scaling=FALSE,
-                             weak_intercept=TRUE,
+                             alpha_intercept_sd = 10,
+                             beta_intercept_sd = 10,
                              fixed_r = FALSE,
                              ) {
+  # A spike-and-slab Gibbs sampler for variable selection in sample selection models. Takes the following arguments:
+  # n : Chain length (including burn-in length).
+  # y : Outcome data. Assumes y_i = NA if s_i = 0.
+  # w_samp : The model matrix W.
+  # x_samp : The model matrix X.
+  # model_select : Whether we want to select variables. TRUE by default. FALSE keeps gamma fixed for the entire chain.
+  # burn_in : The number of iterations to discard at the start of the chain.
+  #
+  # init_alpha : The initial value of alpha. Defaults to rep(0,ncol(w)+1).
+  # init_beta : The initial value of beta. Defaults to rep(0,ncol(x)+1).
+  # init_rho : The initial value of the transformed parameter tilde.rho. Defaults to 0.
+  # init_var : The initial value of the transformed parameter sigma.tilde^2. Defaults to 1.
+  # init_gamma_alpha : The initial model for the selection equation. Defaults to c(1,rep(0,ncol(w)) if model_select=TRUE, and rep(1,ncol(w)+1) otherwise. The first entry corresponds to the intercept.
+  # init_gamma_beta : The initial model for the outcome equation. Defaults to c(1,rep(0,ncol(x)) if model_select=TRUE, and rep(1,ncolx)+1) otherwise. The first entry corresponds to the intercept.
+  # init_r : The initial value of the shared Bernoulli parameter. Defaults to 0.5. If fixed_r = TRUE, the initial value remains the value for the entire chain.
+  #
+  # rho_param: The parameter tau in (rho.tilde | sigma.tilde^2) ~ N(0,tau * sigma.tilde^2). Default is 5.
+  # var_params: The parameters in sigma.tilde^{2} ~ IG(c,d). The default is (1,1).
+  # r_params : The parameters in r ~ Beta(a_0, b_0). The default is (1,1).
+  #
+  # alpha_spike: The spike distribution for the selection equation. Currently supported are "normal", "laplace" and "t" (with 3 degrees of freedom). The default is "normal".
+  # alpha_slab: The slab distribution for the selection equation, as above.
+  # beta_spike: The spike distribution for the outcome equation, as above.
+  # beta_slab: The slab distribution for the outcome equation, as above.
+  # 
+  # tau_0_alpha : Spike standard deviation for selection equation. Defaults to 1/sqrt(p*n).
+  # tau_1_alpha : Slab standard deviation for the selection equation. Defaults to sqrt(3)/pi.
+  # tau_0_beta : Spike standard deviation for the outcome equation. Defaults to 1/sqrt(q*n).
+  # tau_1_beta : Slab standard deviation for the outcome equation. Defaults to sqrt(0.5*log(nrow(x))/log(500)).
+  #
+  # var_scaling : Whether to include sigma.tilde^2 in the priors for beta. TRUE leads to Class II priors, and FALSE to Class I. Defaults to FALSE.
+  # alpha_intercept_sd : The standard deviation for the intercept in the selection equation. Default is 10.
+  # beta_intercept_sd : The standard deviation for the intercept in the outcome equation. Default is 10.
+  # fixed_r : Whether to use a fixed r. FALSE imposes a Beta(a_0, b_0) prior on r, and is the default.
   
   x = cbind(1,as.matrix(x_samp))
   w = cbind(1,as.matrix(w_samp))
@@ -98,7 +131,7 @@ gibbs_spike_slab <- function(n,
   beta_slab_pdf <- h_pdf(beta_slab)
   
   tau_0_alpha = ifelse(is.na(tau_0_alpha), 1/sqrt((p_w-1)*nrow(w)), tau_0_alpha)
-  tau_1_alpha = ifelse(is.na(tau_1_alpha), sqrt(2)/pi, tau_1_alpha)
+  tau_1_alpha = ifelse(is.na(tau_1_alpha), sqrt(3)/pi, tau_1_alpha)
   tau_0_beta = ifelse(is.na(tau_0_beta), 1/sqrt((p_x-1)*nrow(x)), tau_0_beta)
   tau_1_beta = ifelse(is.na(tau_1_beta), sqrt(0.5*log(nrow(x))/log(500)), tau_1_beta)
   
@@ -107,18 +140,12 @@ gibbs_spike_slab <- function(n,
     beta_sd = ifelse(gamma_beta==1,tau_1_beta,tau_0_beta)
   }
   else{
-    if(sum(is.na(alpha_sd))>0){
-      alpha_sd = rep(tau_1_alpha,p_w)
-    }
-    if(sum(is.na(beta_sd))>0){
-      beta_sd = rep(tau_1_beta,p_x)
-    }
+    alpha_sd = rep(tau_1_alpha,p_w)
+    beta_sd = rep(tau_1_beta,p_x)
   }
   
-  if(weak_intercept==TRUE){
-    alpha_sd[1] = 10
-    beta_sd[1] = 10
-  }
+  alpha_sd[1] = alpha_intercept_sd
+  beta_sd[1] = beta_intercept_sd
   
   if(var_scaling==TRUE){
     beta_sd = beta_sd * sqrt(var)
@@ -139,7 +166,7 @@ gibbs_spike_slab <- function(n,
   v_alpha = rep(0,p_w)
   v_beta = rep(0,p_x)
   if(sum(gamma_alpha==0) > 0){
-    v_alpha[gamma_alpha==0] = alpha_spike_sampler(p_w - sum(gamma_alpha),param=0)
+    v_alpha[gamma_alpha==0] = alpha_spike_sampler(p_w - sum(gamma_alpha),param=0) # "param=0" tells it to use the prior scale distribution and not the posterior
   }
   if(sum(gamma_alpha==1) > 0){
     v_alpha[gamma_alpha==1] = alpha_slab_sampler(sum(gamma_alpha),param=0)
@@ -217,10 +244,8 @@ gibbs_spike_slab <- function(n,
     alpha_sd = ifelse(gamma_alpha==1,tau_1_alpha,tau_0_alpha)
     beta_sd = ifelse(gamma_beta==1,tau_1_beta,tau_0_beta)
     
-    if(weak_intercept==TRUE){
-      alpha_sd[1] = 10
-      beta_sd[1] = 10
-    }
+  alpha_sd[1] = alpha_intercept_sd
+  beta_sd[1] = beta_intercept_sd
     
     if(var_scaling==TRUE){
       beta_sd = beta_sd * sqrt(var)
