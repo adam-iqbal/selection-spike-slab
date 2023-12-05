@@ -7,3 +7,4 @@ Required packages: sampleSelection, MASS, rtruncnorm (for spike-and-slab only), 
 
 The folder "testing" contain parallelized functions to store results from simulations, but this needs to be run manually. An example is provided in gibbs_simulation.R for one scenario. It also contains code for the two real data applications.
 In ambulatory_testing.R and rand_testing.R, the provided code will store all the output from the four models, provided all the packages and required functions are loaded into the workspace.
+"speed_test.R" contains the code used to test the running time of individual iterations (which will differ by computer, of course).
