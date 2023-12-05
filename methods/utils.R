@@ -33,7 +33,7 @@ alpha_sample <- function(y_obs,x_obs,s_0,s_1,w_0,w_1,var,rho,beta,alpha_prior_va
 }
 
 beta_rho_sample <- function(res,y_obs,x_obs,alpha,var,beta_prior_var,rho_param) {
-  # Beta and p are sampled jointly rather than separately
+  # Beta and rho are sampled jointly rather than separately
   x_res = cbind(x_obs,res)
   xtx_res = t(x_res) %*% x_res
   beta_rho_var = c(beta_prior_var,rho_param*var)
@@ -44,6 +44,7 @@ beta_rho_sample <- function(res,y_obs,x_obs,alpha,var,beta_prior_var,rho_param) 
 }
 
 bernoulli_log <- function(p,t1,t2){
+  # Used to turn the log probabilities into the posterior inclusion probability
   exponent = log(1-p) - log(p) + t2 - t1
   out = 1/(1+exp(exponent))
   return(out)
