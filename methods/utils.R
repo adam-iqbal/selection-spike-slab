@@ -1,5 +1,5 @@
 trunc_sample <- function(n,mean=0,sd=1,a=-Inf,b=Inf){
-  # Takes n samples from a truncated normal distribution with range (a,b)
+  # Takes n samples from a truncated normal distribution with range (a,b). Not used by default - included for completeness only.
   u = runif(n)
   alpha = (a-mean)/sd
   beta = (b-mean)/sd
@@ -8,7 +8,7 @@ trunc_sample <- function(n,mean=0,sd=1,a=-Inf,b=Inf){
 }
 
 s_sample <- function(y_obs,x_obs,w_0,w_1,beta,alpha,var,rho) {
-  # Simulates the selection variable (to use in Gibbs sampling)
+  # Simulates the selection variable (to use in Gibbs sampling). Uses rtruncnorm by default, but can be modified to allow for inverse CDF sampling.
   temp_var = var / (var + rho**2)
   temp_mean_1 = w_0%*%alpha
   temp_mean_2 = w_1%*%alpha + (y_obs - x_obs%*%beta)*rho/(var + rho**2)
