@@ -5,5 +5,5 @@ The folder "methods" includes the spike-and-slab sampler implementation, alongsi
 
 Required packages: sampleSelection, MASS, rtruncnorm (for spike-and-slab only), numDeriv (for Adaptive LASSO only), ssmrob (for the ambulatory data only)
 
-The simulation studies contain parallelized functions to store results from simulations, but this needs to be run manually. An example is provided in gibbs_simulation.R for one scenario.
+The folder "testing" contain parallelized functions to store results from simulations, but this needs to be run manually. An example is provided in gibbs_simulation.R for one scenario. It also contains code for the two real data applications.
 In ambulatory_testing.R and rand_testing.R, the provided code will store all the output from the four models, provided all the packages and required functions are loaded into the workspace.
