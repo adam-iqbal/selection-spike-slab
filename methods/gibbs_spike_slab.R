@@ -32,9 +32,9 @@ gibbs_spike_slab <- function(n,
                              var_scaling=FALSE,
                              alpha_intercept_sd = 10,
                              beta_intercept_sd = 10,
-                             fixed_r = FALSE,
-                             ) {
-  # A spike-and-slab Gibbs sampler for variable selection in sample selection models. Takes the following arguments:
+                             fixed_r = FALSE) {
+  # A spike-and-slab Gibbs sampler for variable selection in sample selection models. Currently supports normal, Laplace and t-distribution priors, with 3 d.f. for the t-distribution.
+  # Takes the following arguments:
   # n : Chain length (including burn-in length).
   # y : Outcome data. Assumes y_i = NA if s_i = 0.
   # w_samp : The model matrix W.
@@ -68,7 +68,13 @@ gibbs_spike_slab <- function(n,
   # alpha_intercept_sd : The standard deviation for the intercept in the selection equation. Default is 10.
   # beta_intercept_sd : The standard deviation for the intercept in the outcome equation. Default is 10.
   # fixed_r : Whether to use a fixed r. FALSE imposes a Beta(a_0, b_0) prior on r, and is the default.
-  
+  #
+  # Returns a list with the following components:
+  # alpha : a matrix of all the alpha coefficients (after burn-in).
+  # beta : a matrix of all the beta coefficients (after burn-in).
+  # alpha_indicators : a matrix of all the indicators for the selection variables (after burn-in) except the intercept.
+  # beta_indicators : a matrix of all the indicators for the outcome variables (after burn-in) except the intercept.
+  # other_params : a matrix with columns (rho, sigma, r). rho and sigma have been transformed back from rho.tilde and sigma.tilde before storage, so these are truly rho and sigma.
   x = cbind(1,as.matrix(x_samp))
   w = cbind(1,as.matrix(w_samp))
   p_w = ncol(w)
