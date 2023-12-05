@@ -1,4 +1,17 @@
 stepwise_ssel <- function(object,k=2,path="drop",S_vars=NULL,O_vars=NULL){
+  # Basic implementation of stepwise selection for sample selection models. Closely follows the default implementation of stepwise selection in R, stat:step, and uses sampleSelection:ssel for the model fit.
+  # Using information criterion (pk - 2log(L)), where p is the number of parameters.
+  # 
+  # Takes the following arguments:
+  # object: The initial model being considered. Usually the full model for backwards selection, and the null model for forwards selection.
+  # k : The coefficient in the information criterion. Uses k=2 by default, giving Akaike Information Criterion. k = log(n) gives Bayesian Information Criterion.
+  # path : The type of selection. Either "drop" for backwards selection, "add" for forwards selection or "both". The default is "drop".
+  # S_vars : The variables to be considered for inclusion in the selection equation that are not in the initial model. Redundant is not "drop".
+  # O_vars : The variables to be considered for inclusion in the outcome equation that are not in the initial model. Redundant if path is "drop".
+  #
+  # Returns:
+  # An object of type ssel, the final model fit by the stepwise selection.
+  #
   steps <- nParam(object)
   current_object <- object
   
