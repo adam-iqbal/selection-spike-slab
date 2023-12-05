@@ -1,5 +1,7 @@
 source("simulation_utils.R")
 
+# Parallel code used to generate/store all the simulations for the Gibbs sampler
+
 gibbs_parallel <- function(tau_0_alpha, tau_1_alpha,
                            tau_0_beta,tau_1_beta,
                            true_alpha,
@@ -106,3 +108,70 @@ gibbs_parallel <- function(tau_0_alpha, tau_1_alpha,
   beep()
   return(oper)
 }
+
+####################
+
+# Example with n=500,p=25,corr=0.5, as in the simulation study
+
+n= 500
+p= 25
+corr= 0.5
+folder_path = "" # change this
+cov_seed=0
+start_seed = 1
+num_seeds=1000
+miss = 0.3
+
+
+# generate fixed covariates
+set.seed(cov_seed)
+covs = covariate_sim(n,p)
+
+true_alpha = c(0.5,1,1.5, rep(0,p-3))/sqrt(2)
+true_beta = c(0.25,0.5,1, rep(0,p-3))
+
+# intercepts
+true_alpha = c(int_calc(covs$w,true_alpha,miss), true_alpha)
+true_beta = c(0.5,true_beta)
+
+
+alpha_spike = "laplace"
+alpha_slab = "laplace"
+beta_spike = "laplace"
+beta_slab = "laplace"
+  
+tau_0_alpha = 1/sqrt(p*n) 
+tau_1_alpha = 0.5
+  
+tau_0_beta = 1/sqrt(p*n)
+tau_1_beta = 0.5
+
+n_samp = 10000
+burn_in = n_samp%/%8
+p_param = 5
+
+  
+out = parallel_seed_testing_6(tau_0_alpha=tau_0_alpha,tau_1_alpha=tau_1_alpha,
+                              tau_0_beta=tau_0_beta,tau_1_beta=tau_1_beta,
+                              x = covs$x,
+                              w = covs$w,
+                              true_alpha = true_alpha,
+                              true_beta = true_beta,
+                              alpha_spike = alpha_spike,
+                              alpha_slab = alpha_slab,
+                              beta_spike = beta_spike,
+                              beta_slab = beta_slab,
+                              n=n,
+                              p=p,
+                              corr=corr,
+                              start_seed=start_seed,
+                              num_seeds=num_seeds,
+                              n_samp=n_samp,
+                              burn_in=burn_in,
+                              r_params=c(1,1),
+                              p_param=p_param,
+                              var_scaling=var_scaling,
+                              folder_path = folder_path,
+                              var_params=c(1,1),
+                              alpha_intercept_sd=tau_1_alpha,
+                              beta_intercept_sd=tau_1_beta)
