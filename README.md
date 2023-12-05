@@ -1,2 +1,9 @@
 # Spike-and-slab priors for variable selection in sample selection problems
-Bayesian variable selection with spike and slab priors applied to sample selection. For now only considering continuous spike-and-slab priors, with the parameter priors (given gamma) being independent Bernoulli distributions with a common parameter.
+Basic implementation of the methods described in "Bayesian variable selection in sample selection models using spike-and-slab priors".
+
+The folder "methods" includes the spike-and-slab sampler implementation, alongside implementations for stepwise selection and Adaptive LASSO. The supported priors for the spike-and-slab sampler are normal, Laplace, and t-distribution with 3 degrees of freedom, though this can be modified in the code itself.
+
+Required packages: sampleSelection, MASS, rtruncnorm (for spike-and-slab only), numDeriv (for Adaptive LASSO only), ssmrob (for the ambulatory data only)
+
+The simulation studies contain parallelized functions to store results from simulations, but this needs to be run manually. An example is provided in gibbs_simulation.R for one scenario.
+In ambulatory_testing.R and rand_testing.R, the provided code will store all the output from the four models, provided all the packages and required functions are loaded into the workspace.
