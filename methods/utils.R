@@ -51,7 +51,7 @@ bernoulli_log <- function(p,t1,t2){
 }
 
 h_sampler <- function(dist){
-  # Wrapper function for the sampling distributions for scale mixtures of normals. Supported are normal, laplace and t (with 3 degrees of freedom), but this can be modified for any scale mixture.
+  # Wrapper function for prior and posterior sampling distributions of scale mixtures of normals. Supported are normal, laplace and t (with 3 degrees of freedom), but this can be modified for any scale mixture.
   if(dist=="normal"){
     return(const_sampler)
   }
@@ -64,7 +64,7 @@ h_sampler <- function(dist){
 }
 
 h_pdf <- function(dist){
-  # Wrapper function for the prior/posterior densities for scale mixtures of normals. Supported are normal, laplace and t (with 3 degrees of freedom), but this can be modified for any scale mixture.
+  # Wrapper function for the prior densities of scale mixtures of normals. Supported are normal, laplace and t (with 3 degrees of freedom), but this can be modified for any scale mixture.
   if(dist=="normal"){
     return(const_pdf)
   }
