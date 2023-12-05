@@ -115,7 +115,6 @@ lambda.max=10
 lambda.min=1e-4
 n.lambda=100
 lambda = exp(seq(log(lambda.max),log(lambda.min),length.out=n.lambda))
-gc(reset=TRUE)
 rand_lasso <- Heckman_lsa_scaled(s_formula, y_formula, data = test_dat_no_na,
                                 penalty="ALASSO", crit="bic",lambda=lambda)
 
