@@ -1,4 +1,5 @@
 # Required packages: sampleSelection (for dataset, full model and stepwise), MASS (for spike-slab and ALASSO), rtruncnorm (for spike-slab), numDeriv (for spike-slab)
+# Additionally requires all the functions in the methods files to be loaded (gibbs_spike_slab, stepwise_ssel, all the functions in alasso.R and utils.R)
 
 # Random seed for reproducibility in spike-and-slab sampler
 set.seed(1234) 
