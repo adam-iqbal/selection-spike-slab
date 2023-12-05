@@ -75,6 +75,7 @@ gibbs_spike_slab <- function(n,
   # alpha_indicators : a matrix of all the indicators for the selection variables (after burn-in) except the intercept.
   # beta_indicators : a matrix of all the indicators for the outcome variables (after burn-in) except the intercept.
   # other_params : a matrix with columns (rho, sigma, r). rho and sigma have been transformed back from rho.tilde and sigma.tilde before storage, so these are truly rho and sigma.
+  #
   x = cbind(1,as.matrix(x_samp))
   w = cbind(1,as.matrix(w_samp))
   p_w = ncol(w)
