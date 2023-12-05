@@ -37,7 +37,7 @@ beta_rho_sample <- function(res,y_obs,x_obs,alpha,var,beta_prior_var,rho_param) 
   x_res = cbind(x_obs,res)
   xtx_res = t(x_res) %*% x_res
   beta_rho_var = c(beta_prior_var,rho_param*var)
-  beta_post_var = solve(diag(1/beta_p_var) + xtx_res/var)
+  beta_post_var = solve(diag(1/beta_rho_var) + xtx_res/var)
   beta_post_mean = beta_post_var %*% (t(x_res)%*%y_obs/var)
   beta_rho_joint = mvrnorm(n=1,mu=beta_post_mean, Sigma=beta_post_var)
   return(beta_rho_joint)
