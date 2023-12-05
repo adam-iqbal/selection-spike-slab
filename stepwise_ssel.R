@@ -1,52 +1,68 @@
 stepwise_ssel <- function(object,k=2,path="drop",S_vars=NULL,O_vars=NULL){
-  # Input types
-  # object : A fitted selection model using selection function.
-  # k : Parameter for AIC. k=2 gives the usual AIC, k=log(n) gives BIC.
-  # path : The type of selection. "drop" for backward selection, "add" for forward selection.
-  # S_vars : A vector of possible variables that can be used for the selection equation (e.g. column names from the data used to fit the model). Only needed when using forward selection.
-  # O_vars : A vector of possible variables that can be used for the outcome equation. Only needed when using forward selection.
-  
   steps <- nParam(object)
   current_object <- object
   
-  if(path=="add"){
+  change_path = "drop"
+  
+  if(path!="drop"){
     full_scope_S <- as.formula(paste("~ . +",paste(S_vars,collapse="+")))
     full_scope_S <- update.formula(formula(current_object$termsS), full_scope_S)
     full_scope_O <- as.formula(paste("~ . +",paste(O_vars,collapse="+")))
     full_scope_O <- update.formula(formula(current_object$termsO), full_scope_O)
     steps <- length(S_vars) + length(O_vars)
+    change_path = "add"
   }
 
   while(steps > 0){
     form_S <- formula(current_object$termsS)
     form_O <- formula(current_object$termsO)
-    
+    print(form_S)
+    print(form_O)
     if(path=="drop"){
       scope_S <- drop.scope(current_object$termsS)
       scope_O <- drop.scope(current_object$termsO)
-      current_ans <- drop1_ssel(current_object,k=2)
+      current_ans <- drop1_ssel(current_object,k=k)
     }
     else if(path=="add"){
       scope_S <- add.scope(current_object$termsS,full_scope_S)
       scope_O <- add.scope(current_object$termsO,full_scope_O)
-      current_ans <- add1_ssel(current_object,full_scope_S,full_scope_O,k=2)
+      current_ans <- add1_ssel(current_object,full_scope_S,full_scope_O,k=k)
     }
-    cat(deparse(form_S),"\n", deparse(form_O),"\n")
-    print(current_ans)
-    
-
+    else if(path=="both"){
+      drop_S <- drop.scope(current_object$termsS)
+      drop_O <- drop.scope(current_object$termsO)
+      current_drop <- drop1_ssel(current_object,k=k)
+      
+      add_S <- add.scope(current_object$termsS,full_scope_S)
+      add_O <- add.scope(current_object$termsO,full_scope_O)
+      current_add <- add1_ssel(current_object,full_scope_S,full_scope_O,k=k)
+    }
+    if(path=="both"){
+      if(min(current_add[,2]) < min(current_drop[,2])){
+        change_path <- "add"
+        scope_S <- add_S
+        scope_O <- add_O
+        current_ans <- current_add
+      } else{
+        change_path <- "drop"
+        scope_S <- drop_S
+        scope_O <- drop_O
+        current_ans <- current_drop
+      }
+    }
     nS <- length(scope_S)
     nO <- length(scope_O)
     idx <- which.min(current_ans[,2]) - 1
+    print(change_path)
     if(idx==0){
       break
     }
     else if(idx<(nS+1)){
       change = scope_S[idx]
-      if(path=="drop"){
+      if(change_path=="drop"){
         form <- update.formula(form_S, as.formula(paste("~ . -", change)))
       }
-      else if(path=="add"){
+      else if(change_path=="add"){
         form <- update.formula(form_S, as.formula(paste("~ . +", change)))
       }
       current_object <- update_ssel(current_object,form, eqn="selection")
@@ -55,10 +71,10 @@ stepwise_ssel <- function(object,k=2,path="drop",S_vars=NULL,O_vars=NULL){
     }
     else{
       change = scope_O[idx-nS]
-      if(path=="drop"){
+      if(change_path=="drop"){
         form <- update.formula(form_O, as.formula(paste("~ . -", change)))
       }
-      else if(path=="add"){
+      else if(change_path=="add"){
         form <- update.formula(form_O, as.formula(paste("~ . +", change)))
       }
       current_object <- update_ssel(current_object,form, eqn="outcome")
@@ -82,24 +98,25 @@ add1_ssel <- function(object, full_scope_S, full_scope_O, k=2){
                                                                   scope_S, scope_O), c("df", "AIC")))
   
   ans[1,] <- c(nParam(object), as.numeric(AIC(object, k=k)))
+  if(nS>0){
   for(i in 1:nS){
     tt <- scope_S[i]
     form <- update.formula(form_S, as.formula(paste("~ . +", tt)))
     temp_object <- update_ssel(object,form, eqn="selection")
     temp_object$start <- NULL
-    temp_object <- eval(temp_object)
-    ans[i+1,] <- c(nParam(temp_object), as.numeric(AIC(temp_object, k=k)))
-  }
+    fitted_object <- eval(temp_object)
+    ans[i+1,] <- c(nParam(fitted_object), as.numeric(AIC(fitted_object, k=k)))
+  } }
+  if(nO>0){
   for(i in 1:nO){
     tt <- scope_O[i]
     form <- update.formula(form_O, as.formula(paste("~ . +", tt)))
     temp_object <- update_ssel(object,form, eqn="outcome")
     temp_object$start <- start_check(temp_object)
-    temp_object <- eval(temp_object)
-    ans[nS+i+1,] <- c(nParam(temp_object), as.numeric(AIC(temp_object, k=k)))
-  }
+    fitted_object <- eval(temp_object)
+    ans[nS+i+1,] <- c(nParam(fitted_object), as.numeric(AIC(fitted_object, k=k)))
+  } }
   ans <- data.frame(ans)
-  #cat(deparse(form_S),"\n", deparse(form_O),"\n")
   return(ans)
 }
 
@@ -114,20 +131,24 @@ drop1_ssel <- function(object, k=2){
                                                                   scope_S, scope_O), c("df", "AIC")))
   
   ans[1,] <- c(nParam(object), as.numeric(AIC(object, k=k)))
+  if(nS>0){
   for(i in 1:nS){
     tt <- scope_S[i]
     form <- update.formula(form_S, as.formula(paste("~ . -", tt)))
     temp_object <- update_ssel(object,form, eqn="selection")
+    temp_object$start <- start_check(temp_object)
     temp_object <- eval(temp_object)
     ans[i+1,] <- c(nParam(temp_object), as.numeric(AIC(temp_object, k=k)))
-  }
+  } }
+  if(nO>0){
   for(i in 1:nO){
     tt <- scope_O[i]
     form <- update.formula(form_O, as.formula(paste("~ . -", tt)))
     temp_object <- update_ssel(object,form, eqn="outcome") 
+    temp_object$start <- start_check(temp_object)
     temp_object <- eval(temp_object)
     ans[nS+i+1,] <- c(nParam(temp_object), as.numeric(AIC(temp_object, k=k)))
-  }
+  } }
   ans <- data.frame(ans)
   #cat(deparse(form_S),"\n", deparse(form_O),"\n")
   return(ans)
@@ -141,19 +162,24 @@ update_ssel <- function(object,formula,eqn,evaluate=FALSE){
   else if(eqn=="outcome"){
     call$outcome <- formula
   }
-  if (evaluate) 
+  if (evaluate){
     eval(call, parent.frame())
-  else call
+  }
+  else{
+   call 
+  }
 }
 start_check <- function(object){
-  # selection function uses two-step estimates as initial values for parameters, which breaks down if the selection equation has only the intercept (which is the starting point for forwards selection).
-  # This function checks if the selection equation has only the intercept, and if so, manually sets initial values for the parameters, choosing 0 for all the coefficients, 1 for sigma and 0.5 for rho.
+  # selection function uses two-step estimates as initial values for parameters, which breaks down if 
+  # the selection equation has only the intercept (which is the starting point for forwards selection)
+  # This function checks if the selection equation has only the intercept, and if so, manually sets initial values
+  # for the parameters, choosing 0 for all the coefficients, 1 for sigma and 0 for rho.
   p_s <- length(attr(terms.formula(eval(object$selection)),"term.labels"))
   p_o <- length(attr(terms.formula(eval(object$outcome)),"term.labels"))
   if(p_s > 0){
     return(NULL)
   }
   else{
-    return(c(rep(0,p_o+2),1,0.5))
+    return(c(rep(0,p_o+2),1,0))
   }
 }
