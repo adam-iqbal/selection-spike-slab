@@ -201,8 +201,8 @@ gibbs_spike_slab <- function(n,
     
     res = s_1 - w_1%*%alpha # Defined outside function because it is also used to sample var
     beta_rho_joint = beta_rho_sample(res,y_obs,x_obs,alpha,var,beta_mix,rho_param)
-    beta = beta_p_joint[1:p_x]
-    rho = beta_p_joint[p_x+1]
+    beta = beta_rho_joint[1:p_x]
+    rho = beta_rho_joint[p_x+1]
     
     var_post_c = var_params[1] + (1 + sum(idx==1))/2
     var_post_d = var_params[2] + rho**2/(2*rho_param) + 0.5*sum((y_obs - x_obs%*%beta - rho*res)**2)
