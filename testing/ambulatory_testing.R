@@ -40,8 +40,8 @@ amb_ssel <- ssel
 if(sum(is.na(ssel))==0){
   init_alpha = ssel$estimate[1:(p+1)]
   init_beta = ssel$estimate[(p+2):(p+q+2)]
-  init_p = ssel$estimate[p+q+4] * ssel$estimate[p+q+3]
-  init_var = ssel$estimate[p+q+3]**2 - init_p**2
+  init_rho = ssel$estimate[p+q+4] * ssel$estimate[p+q+3]
+  init_var = ssel$estimate[p+q+3]**2 - init_rho**2
   
   init_gamma = ifelse(summary(ssel)$estimate[-c(1,p+2,(p+q+3),(p+q+4)),4] < 0.05, 1, 0)
   init_gamma_alpha = init_gamma[1:p]
@@ -49,7 +49,7 @@ if(sum(is.na(ssel))==0){
 } else{
   init_alpha = rep(0,p+1)
   init_beta = rep(0,q+1)
-  init_p = 0
+  init_rho = 0
   init_var = 1
   init_gamma_alpha = rep(0,p)
   init_gamma_beta = rep(0,q)
@@ -67,7 +67,7 @@ amb_gibbs = gibbs_spike_slab(n_samp,y,x,w,burn_in=burn_in,
                               init_alpha = init_alpha,
                               init_beta = init_beta,
                               init_var = init_var,
-                              init_p = init_p,
+                              init_rho = init_rho,
                               init_gamma_alpha = init_gamma_alpha,
                               init_gamma_beta = init_gamma_beta,
                               r_params = r_params,
