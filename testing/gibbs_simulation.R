@@ -2,27 +2,28 @@ source("simulation_utils.R")
 
 gibbs_parallel <- function(tau_0_alpha, tau_1_alpha,
                            tau_0_beta,tau_1_beta,
-                                    true_alpha,
-                                    true_beta,
-                                    x,
-                                    w,
-                                    alpha_spike = "normal",
-                                    alpha_slab = "normal",
-                                    beta_spike = "normal",
-                                    beta_slab = "normal",
-                                    n=1000,
-                                    p=20,
-                                    corr=0.5,
-                                    start_seed=0,
-                                    num_seeds=10,
-                                    n_samp=10000,
-                                    burn_in=1000,
-                                    r_params=c(1,1),
-                                    rho_param=0.5,
-                                    var_params=c(1,1),
-                                    var_scaling=FALSE,
-                                    weak_intercept=FALSE,
-                                    folder_path){
+                           true_alpha,
+                           true_beta,
+                           folder_path,
+                           x,
+                           w,
+                           alpha_spike = "normal",
+                           alpha_slab = "normal",
+                           beta_spike = "normal",
+                           beta_slab = "normal",
+                           n=1000,
+                           p=20,
+                           corr=0.5,
+                           start_seed=0,
+                           num_seeds=10,
+                           n_samp=10000,
+                           burn_in=1000,
+                           r_params=c(1,1),
+                           rho_param=5,
+                           var_params=c(1,1),
+                           var_scaling=FALSE,
+                           alpha_intercept_sd=10,
+                           beta_intercept_sd=10){
   
   num_cores <- min(detectCores() - 2,num_seeds)  
   cl <- makeCluster(num_cores)
@@ -96,7 +97,8 @@ gibbs_parallel <- function(tau_0_alpha, tau_1_alpha,
                                                   p_param=p_param,
                                                   var_params=var_params,
                                                   var_scaling=var_scaling,
-                                                  weak_intercept=weak_intercept)
+                                                  alpha_intercept_sd=alpha_intercept_sd,
+                                                  beta_intercept_sd=beta_intercept_sd)
                     filename = paste(folder_path,"/out/out",start_seed+i-1,".rds",sep='')
                     saveRDS(test_gibbs,file=filename)
                     return(NA)
