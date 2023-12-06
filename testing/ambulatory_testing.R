@@ -82,8 +82,7 @@ amb_gibbs = gibbs_spike_slab(n_samp,y,x,w,burn_in=burn_in,
                               r_params = r_params,
                               rho_param=rho_param,
                               var_params=var_params,
-                             var_scaling=FALSE,
-                            weak_intercept=TRUE)
+                             var_scaling=FALSE)
 
 # Adaptive LASSO - needs 0 instead of NA in the outcome, and requires a different selection of lambda than default
 test_dat_no_na <- test_dat
