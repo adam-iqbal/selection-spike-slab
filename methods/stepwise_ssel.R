@@ -1,9 +1,10 @@
-stepwise_ssel <- function(object,k=2,path="drop",S_vars=NULL,O_vars=NULL){
+stepwise_ssel <- function(object,data,k=2,path="drop",S_vars=NULL,O_vars=NULL,print_model=FALSE){
   # Basic implementation of stepwise selection for sample selection models. Closely follows the default implementation of stepwise selection in R, stat:step, and uses sampleSelection:ssel for the model fit.
   # Using information criterion (pk - 2log(L)), where p is the number of parameters.
   # 
   # Takes the following arguments:
   # object: The initial model being considered. Usually the full model for backwards selection, and the null model for forwards selection.
+  # data: The dataset used for the model.
   # k : The coefficient in the information criterion. Uses k=2 by default, giving Akaike Information Criterion. k = log(n) gives Bayesian Information Criterion.
   # path : The type of selection. Either "drop" for backwards selection, "add" for forwards selection or "both". The default is "drop".
   # S_vars : The variables to be considered for inclusion in the selection equation that are not in the initial model. Redundant is not "drop".
@@ -14,7 +15,6 @@ stepwise_ssel <- function(object,k=2,path="drop",S_vars=NULL,O_vars=NULL){
   #
   steps <- nParam(object)
   current_object <- object
-  
   change_path = "drop"
   
   if(path!="drop"){
@@ -29,26 +29,28 @@ stepwise_ssel <- function(object,k=2,path="drop",S_vars=NULL,O_vars=NULL){
   while(steps > 0){
     form_S <- formula(current_object$termsS)
     form_O <- formula(current_object$termsO)
-    print(form_S)
-    print(form_O)
+    if(print_model==TRUE){
+      print(form_S)
+      print(form_O)
+    }
     if(path=="drop"){
       scope_S <- drop.scope(current_object$termsS)
       scope_O <- drop.scope(current_object$termsO)
-      current_ans <- drop1_ssel(current_object,k=k)
+      current_ans <- drop1_ssel(current_object,data,k=k)
     }
     else if(path=="add"){
       scope_S <- add.scope(current_object$termsS,full_scope_S)
       scope_O <- add.scope(current_object$termsO,full_scope_O)
-      current_ans <- add1_ssel(current_object,full_scope_S,full_scope_O,k=k)
+      current_ans <- add1_ssel(current_object,data,full_scope_S,full_scope_O,k=k)
     }
     else if(path=="both"){
       drop_S <- drop.scope(current_object$termsS)
       drop_O <- drop.scope(current_object$termsO)
-      current_drop <- drop1_ssel(current_object,k=k)
+      current_drop <- drop1_ssel(current_object,data,k=k)
       
       add_S <- add.scope(current_object$termsS,full_scope_S)
       add_O <- add.scope(current_object$termsO,full_scope_O)
-      current_add <- add1_ssel(current_object,full_scope_S,full_scope_O,k=k)
+      current_add <- add1_ssel(current_object,data,full_scope_S,full_scope_O,k=k)
     }
     if(path=="both"){
       if(min(current_add[,2]) < min(current_drop[,2])){
@@ -66,7 +68,9 @@ stepwise_ssel <- function(object,k=2,path="drop",S_vars=NULL,O_vars=NULL){
     nS <- length(scope_S)
     nO <- length(scope_O)
     idx <- which.min(current_ans[,2]) - 1
-    print(change_path)
+    if(print_model==TRUE){
+      print(change_path)
+    }
     if(idx==0){
       break
     }
@@ -100,7 +104,7 @@ stepwise_ssel <- function(object,k=2,path="drop",S_vars=NULL,O_vars=NULL){
   return(current_object)
 }
 
-add1_ssel <- function(object, full_scope_S, full_scope_O, k=2){
+add1_ssel <- function(object, data, full_scope_S, full_scope_O, k=2){
   scope_S <- add.scope(object$termsS,full_scope_S)
   scope_O <- add.scope(object$termsO,full_scope_O)
   nS <- length(scope_S)
@@ -133,7 +137,7 @@ add1_ssel <- function(object, full_scope_S, full_scope_O, k=2){
   return(ans)
 }
 
-drop1_ssel <- function(object, k=2){
+drop1_ssel <- function(object, dat, k=2){
   scope_S <- drop.scope(object$termsS)
   scope_O <- drop.scope(object$termsO)
   nS <- length(scope_S)
@@ -175,6 +179,7 @@ update_ssel <- function(object,formula,eqn,evaluate=FALSE){
   else if(eqn=="outcome"){
     call$outcome <- formula
   }
+  call$data <- as.name("data")
   if (evaluate){
     eval(call, parent.frame())
   }
