@@ -8,3 +8,5 @@ Required packages: sampleSelection, MASS, rtruncnorm (for spike-and-slab only), 
 The folder "testing" contain parallelized functions to store results from simulations, but this needs to be run manually. An example is provided in gibbs_simulation.R for one scenario. It also contains code for the two real data applications.
 In ambulatory_testing.R and rand_testing.R, the provided code will store all the output from the four models, provided all the packages and required functions are loaded into the workspace.
 "speed_test.R" contains the code used to test the running time of individual iterations (which will differ by computer, of course).
+
+An example of a simulation run can be found in "testing\gibbs_simulation.R". All simulation studies were run with the hyperparameter elicitation as in the example, with only n, p, corr and the given distribution (alpha_spike, alpha_slab, beta_spike, beta_slab) changing between runs, so choosing corresponding values for these parameters should reproduce the exact results in the paper.
