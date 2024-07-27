@@ -1,11 +1,13 @@
 # Spike-and-slab priors for variable selection in sample selection problems
-Basic implementation of the methods described in "Bayesian variable selection in sample selection models using spike-and-slab priors".
+Basic implementation of the methods described in 
 
-The folder "methods" includes the spike-and-slab sampler implementation, alongside implementations for stepwise selection and Adaptive LASSO. The supported priors for the spike-and-slab sampler are normal, Laplace, and t-distribution with 3 degrees of freedom, though this can be modified in the code itself.
+Iqbal, A., Ogundimu, E.O., and Rubio, F.J. (2023). Bayesian variable selection in sample selection models using spike-and-slab priorst. Preprint: https://doi.org/10.48550/arXiv.2312.03538
 
-Required packages: sampleSelection, MASS, rtruncnorm (for spike-and-slab only), numDeriv (for Adaptive LASSO only), ssmrob (for the ambulatory data only)
+- The folder "methods" includes the spike-and-slab sampler implementation, alongside implementations for stepwise selection and Adaptive LASSO. The supported priors for the spike-and-slab sampler are normal, Laplace, and t-distribution with 3 degrees of freedom, though this can be modified in the code itself.
 
-The folder "testing" contain parallelized functions to store results from simulations, but this needs to be run manually. An example is provided in gibbs_simulation.R for one scenario. It also contains code for the two real data applications.
+Required packages: `sampleSelection`, `MASS`, `rtruncnorm` (for spike-and-slab only), `numDeriv` (for Adaptive LASSO only), `ssmrob` (for the ambulatory data only).
+
+- The folder "testing" contain parallelized functions to store results from simulations, but this needs to be run manually. An example is provided in gibbs_simulation.R for one scenario. It also contains code for the two real data applications.
 In ambulatory_testing.R and rand_testing.R, the provided code will store all the output from the four models, provided all the packages and required functions are loaded into the workspace.
 "speed_test.R" contains the code used to test the running time of individual iterations (which will differ by computer, of course).
 
