@@ -1,6 +1,7 @@
 source("simulation_utils.R")
 
 # Parallel code used to generate/store all the simulations for the Gibbs sampler
+# The outputs will be stored in .rds files in the folder "folder_path/out", so please make sure that the folder_path supplied has a sub-folder called "out"
 
 gibbs_parallel <- function(tau_0_alpha, tau_1_alpha,
                            tau_0_beta,tau_1_beta,
@@ -92,11 +93,11 @@ gibbs_parallel <- function(tau_0_alpha, tau_1_alpha,
                                                   init_alpha = init_alpha,
                                                   init_beta = init_beta,
                                                   init_var = init_var,
-                                                  init_p = init_p,
+                                                  init_rho = init_rho,
                                                   init_gamma_alpha = init_gamma_alpha,
                                                   init_gamma_beta = init_gamma_beta,
                                                   r_params = r_params,
-                                                  p_param=p_param,
+                                                  rho_param=rho_param,
                                                   var_params=var_params,
                                                   var_scaling=var_scaling,
                                                   alpha_intercept_sd=alpha_intercept_sd,
@@ -105,7 +106,7 @@ gibbs_parallel <- function(tau_0_alpha, tau_1_alpha,
                     saveRDS(test_gibbs,file=filename)
                     return(NA)
                   }
-  beep()
+#  beep()
   return(oper)
 }
 
@@ -148,10 +149,11 @@ tau_1_beta = 0.5
 
 n_samp = 10000
 burn_in = n_samp%/%8
-p_param = 5
+rho_param = 5
+var_scaling=FALSE
 
   
-out = parallel_seed_testing_6(tau_0_alpha=tau_0_alpha,tau_1_alpha=tau_1_alpha,
+out = gibbs_parallel(tau_0_alpha=tau_0_alpha,tau_1_alpha=tau_1_alpha,
                               tau_0_beta=tau_0_beta,tau_1_beta=tau_1_beta,
                               x = covs$x,
                               w = covs$w,
@@ -169,7 +171,7 @@ out = parallel_seed_testing_6(tau_0_alpha=tau_0_alpha,tau_1_alpha=tau_1_alpha,
                               n_samp=n_samp,
                               burn_in=burn_in,
                               r_params=c(1,1),
-                              p_param=p_param,
+                              rho_param=rho_param,
                               var_scaling=var_scaling,
                               folder_path = folder_path,
                               var_params=c(1,1),
