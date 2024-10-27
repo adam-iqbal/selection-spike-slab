@@ -1,7 +1,6 @@
 source("simulation_utils.R")
 
-# Parallel code used to generate/store all the simulations for the Gibbs sampler
-# The outputs will be stored in .rds files in the folder "folder_path/out", so please make sure that the folder_path supplied has a sub-folder called "out"
+# Parallel code used to generate/store all the simulations for the Gibbs sampler - stores each simulation in .rds files in the folder supplied in folder_path
 
 gibbs_parallel <- function(tau_0_alpha, tau_1_alpha,
                            tau_0_beta,tau_1_beta,
@@ -102,7 +101,7 @@ gibbs_parallel <- function(tau_0_alpha, tau_1_alpha,
                                                   var_scaling=var_scaling,
                                                   alpha_intercept_sd=alpha_intercept_sd,
                                                   beta_intercept_sd=beta_intercept_sd)
-                    filename = paste(folder_path,"/out/out",start_seed+i-1,".rds",sep='')
+                    filename = paste(folder_path,"/out",start_seed+i-1,".rds",sep='')
                     saveRDS(test_gibbs,file=filename)
                     return(NA)
                   }
