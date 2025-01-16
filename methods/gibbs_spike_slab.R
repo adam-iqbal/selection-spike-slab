@@ -140,7 +140,7 @@ gibbs_spike_slab <- function(n,
   tau_0_alpha = ifelse(is.na(tau_0_alpha), 1/sqrt((p_w-1)*nrow(w)), tau_0_alpha)
   tau_1_alpha = ifelse(is.na(tau_1_alpha), sqrt(3)/pi, tau_1_alpha)
   tau_0_beta = ifelse(is.na(tau_0_beta), 1/sqrt((p_x-1)*nrow(x)), tau_0_beta)
-  tau_1_beta = ifelse(is.na(tau_1_beta), sqrt(0.5*log(nrow(x))/log(500)), tau_1_beta)
+  tau_1_beta = ifelse(is.na(tau_1_beta), 0.5*sqrt(log(nrow(x))/log(500)), tau_1_beta)
   
   if(model_select==TRUE){
     alpha_sd = ifelse(gamma_alpha==1,tau_1_alpha,tau_0_alpha)
