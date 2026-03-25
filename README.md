@@ -1,7 +1,7 @@
 # Spike-and-slab priors for variable selection in sample selection problems
 Basic implementation of the methods described in 
 
-Iqbal, A., Ogundimu, E.O., and Rubio, F.J. (2023). Bayesian variable selection in sample selection models using spike-and-slab priorst. Preprint: https://doi.org/10.48550/arXiv.2312.03538
+Iqbal, A., Ogundimu, E.O., and Rubio, F.J. (2026+). Bayesian variable selection in sample selection models using spike-and-slab priors. *Computational Statistics*, in press. [Preprint](https://doi.org/10.48550/arXiv.2312.03538)
 
 - The folder "methods" includes the spike-and-slab sampler implementation, alongside implementations for stepwise selection and Adaptive LASSO. The supported priors for the spike-and-slab sampler are normal, Laplace, and t-distribution with 3 degrees of freedom, though this can be modified in the code itself.
 
