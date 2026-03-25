@@ -12,3 +12,6 @@ In ambulatory_testing.R and rand_testing.R, the provided code will store all the
 "speed_test.R" contains the code used to test the running time of individual iterations (which will differ by computer, of course).
 
 An example of a simulation run can be found in "testing\gibbs_simulation.R". All simulation studies were run with the hyperparameter elicitation as in the example, with only n, p, corr and the given distribution (alpha_spike, alpha_slab, beta_spike, beta_slab) changing between runs, so choosing corresponding values for these parameters should reproduce the exact results in the paper.
+
+
+See also: [Bayesian Variable Selection Under Sample Selection and Model Misspecification](https://github.com/adam-iqbal/bvsss-nlp)
