@@ -6,7 +6,7 @@ This repository contains the R code used to reproduce the results in:
 
 > Iqbal, A., Ogundimu, E.O. and Rubio, F.J. (2026). Bayesian variable selection
 > in sample selection models using spike-and-slab priors.
-> *Computational Statistics*, in press.
+> *Computational Statistics*, **41**: 81.
 > [DOI: 10.1007/s00180-026-01745-3](https://doi.org/10.1007/s00180-026-01745-3) |
 > [Preprint (arXiv:2312.03538)](https://doi.org/10.48550/arXiv.2312.03538)
 
